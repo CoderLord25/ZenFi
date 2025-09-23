@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Wallet - ZenFi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{
+      --sidebar-w: 300px;
+      --shiftX: -160px; /* Âm = lệch trái, Dương = lệch phải */
+      --card-w: 900px; /* độ rộng card */
+      --tile-bg: rgba(18, 20, 24, 0.9);
+      --tile-bd: rgba(255,255,255,0.06);
+    }
+
+    body {
+      margin:0; font-family:'Inter',sans-serif; color:#fff;
+      display:grid; grid-template-columns: var(--sidebar-w) 1fr;
+      background:url("{{ url_for('static', filename='images/ZenFi.jpg') }}") no-repeat center center fixed;
+      background-size:cover; position:relative;
+    }
+    body::before{ content:""; position:absolute; inset:0; background:rgba(0,0,0,.6); z-index:0; }
+    aside, main, .top-right-user{ position:relative; z-index:1; }
+
+    /* Sidebar */
+    .sidebar{ background:rgba(22,24,28,.95); padding:20px 16px; display:flex; flex-direction:column; height:100vh; }
+    .logo{ display:flex; align-items:center; gap:10px; margin-bottom:20px; }
+    .logo img{ height:36px; border-radius:4px; }
+    .logo span{ color:#A6FF4D; font-weight:600; font-size:20px; }
+
+    .menu-top a, .menu a {
+      display:flex; align-items:center; gap:10px;
+      color:#fff; text-decoration:none;
+      font-weight:500; padding:10px 12px;
+      border-radius:6px; transition:background .2s;
+    }
+    .menu-top a:hover, .menu a:hover, .menu a.active {
+      background:#2f3336;
+    }
+
+    nav.menu{ display:flex; flex-direction:column; gap:8px; flex:1; }
+
+    /* Main wrapper */
+    main {
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+    }
+
+    /* Wallet card */
+    .card{ 
+      width: var(--card-w);
+      max-width: 95%;
+      background:var(--tile-bg); 
+      border:1px solid var(--tile-bd);
+      border-radius:14px; 
+      padding:30px; 
+      transform: translateX(var(--shiftX)); /* lệch trái/phải */
+    }
+    .wallet-header{ font-size:22px; font-weight:700; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,.2); padding-bottom:10px; }
+
+    .wallet-item{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 0; border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .wallet-item:last-child{ border-bottom:none; }
+    .wallet-left{ display:flex; align-items:center; gap:12px; }
+    .wallet-icon{ width:40px; height:40px; border-radius:50%; background:#111; display:flex; align-items:center; justify-content:center; overflow:hidden; }
+    .wallet-icon img{ width:26px; height:26px; object-fit:contain; }
+    .wallet-name{ font-weight:600; font-size:15px; }
+
+    .wallet-balance{ text-align:right; }
+    .wallet-balance div:first-child{ font-weight:600; font-size:15px; }
+    .wallet-balance div:last-child{ font-size:13px; color:#aaa; }
+
+    /* Avatar góc phải */
+    .top-right-user{ position:fixed; top:14px; right:16px; display:flex; align-items:center; gap:10px;
+      background:rgba(22,24,28,.7); padding:6px 10px; border-radius:999px; backdrop-filter:blur(6px); }
+    .top-right-user img{ width:28px; height:28px; border-radius:50%; object-fit:cover; }
+    .top-right-user .name{ font-size:14px; font-weight:600; }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+    <aside class="sidebar">
+    <div class="logo">
+        <img src="{{ url_for('static', filename='images/ZenFi.jpg') }}" alt="ZenFi Logo">
+        <span>ZenFi</span>
+    </div>
+
+    <nav class="menu">
+        <a href="/mint_page" class="{% if active_page=='mint' %}active{% endif %}"><i class="fa-solid fa-faucet"></i> Faucet Testnet Token</a>
+        <a href="/earn" class="{% if active_page=='earn' %}active{% endif %}"><i class="fa-solid fa-coins"></i> Earn</a>
+        <a href="/borrow" class="{% if active_page=='borrow' %}active{% endif %}"><i class="fa-solid fa-hand-holding-dollar"></i> Borrow</a>
+        <a href="/swap" class="{% if active_page=='swap' %}active{% endif %}"><i class="fa-solid fa-retweet"></i> Swap</a>
+        <a href="/wallet" class="{% if active_page=='wallet' %}active{% endif %}"><i class="fa-solid fa-wallet"></i> My Wallet</a>
+        <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </nav>
+    </aside>
+
+  <!-- Avatar góc phải -->
+  <div class="top-right-user">
+    <img src="{{ url_for('static', filename='images/user.png') }}" alt="User Avatar">
+    <span class="name">{{ username }}</span>
+  </div>
+
+  <!-- Main -->
+  <main>
+    <div class="card">
+      <div class="wallet-header">Token</div>
+
+      <!-- ZTC -->
+      <div class="wallet-item">
+        <div class="wallet-left">
+          <div class="wallet-icon"><img src="{{ url_for('static', filename='images/ZTC.png') }}"></div>
+          <div class="wallet-name">ZTC</div>
+        </div>
+        <div class="wallet-balance">
+          <div>{{ balance_ztc }} ZTC</div>
+          <div>$0.00</div>
+        </div>
+      </div>
+
+      <!-- zBTC -->
+      <div class="wallet-item">
+        <div class="wallet-left">
+          <div class="wallet-icon"><img src="{{ url_for('static', filename='images/zBTC.png') }}"></div>
+          <div class="wallet-name">zBTC</div>
+        </div>
+        <div class="wallet-balance">
+          <div>{{ balance_zbtc }} zBTC</div>
+          <div>$0.00</div>
+        </div>
+      </div>
+
+      <!-- zETH -->
+      <div class="wallet-item">
+        <div class="wallet-left">
+          <div class="wallet-icon"><img src="{{ url_for('static', filename='images/zETH.png') }}"></div>
+          <div class="wallet-name">zETH</div>
+        </div>
+        <div class="wallet-balance">
+          <div>{{ balance_zeth }} zETH</div>
+          <div>$0.00</div>
+        </div>
+      </div>
+
+      <!-- ZFI -->
+      <div class="wallet-item">
+        <div class="wallet-left">
+          <div class="wallet-icon"><img src="{{ url_for('static', filename='images/ZenFi.jpg') }}"></div>
+          <div class="wallet-name">ZFI</div>
+        </div>
+        <div class="wallet-balance">
+          <div>{{ balance_zfi }} ZFI</div>
+          <div>$0.00</div>
+        </div>
+      </div>
+
+      <!-- USDT -->
+      <div class="wallet-item">
+        <div class="wallet-left">
+          <div class="wallet-icon"><img src="{{ url_for('static', filename='images/usdt.png') }}"></div>
+          <div class="wallet-name">USDT</div>
+        </div>
+        <div class="wallet-balance">
+          <div>{{ balance_usdt }} USDT</div>
+          <div>$0.00</div>
+        </div>
+      </div>
+
+      <!-- USDC -->
+      <div class="wallet-item">
+        <div class="wallet-left">
+          <div class="wallet-icon"><img src="{{ url_for('static', filename='images/usdc.png') }}"></div>
+          <div class="wallet-name">USDC</div>
+        </div>
+        <div class="wallet-balance">
+          <div>{{ balance_usdc }} USDC</div>
+          <div>$0.00</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</body>
+</html>

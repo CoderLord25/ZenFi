@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ZenFi</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{
+      --sidebar-w: 300px;
+      --shiftX: -147px;
+      --card-w: 760px;
+      --tile-bg: rgba(18, 20, 24, 0.9);
+      --tile-bd: rgba(255,255,255,0.06);
+    }
+
+    body{
+      margin:0; font-family:'Inter',sans-serif; color:#fff; height:100vh;
+      display:grid; grid-template-columns: var(--sidebar-w) 1fr;
+      background:url("{{ url_for('static', filename='images/ZenFi.jpg') }}") no-repeat center center fixed;
+      background-size:cover; position:relative;
+    }
+    body::before{ content:""; position:absolute; inset:0; background:rgba(0,0,0,.6); z-index:0; }
+    aside.sidebar, main.main, .top-right-user{ position:relative; z-index:1; }
+
+    /* Sidebar */
+    .sidebar{ background:rgba(22,24,28,.95); box-shadow:2px 0 10px rgba(0,0,0,.5);
+      padding:20px 16px; display:flex; flex-direction:column; gap:16px; }
+    .logo{ display:flex; align-items:center; gap:10px; }
+    .logo img{ height:36px; border-radius:4px; }
+    .logo span{ color:#A6FF4D; font-weight:600; font-size:20px; }
+    nav.menu{ display:flex; flex-direction:column; gap:8px; }
+    .menu a{ display:flex; align-items:center; gap:10px;
+      color:#fff; text-decoration:none; font-weight:500;
+      padding:10px 12px; border-radius:6px; transition:background .2s; }
+    .menu a:hover, .menu a.active{ background:#2f3336; }
+    .menu-bottom{ margin-top:auto; }
+
+    /* Main */
+    .main{ display:flex; align-items:center; justify-content:center; min-height:100vh; padding-left:0; }
+    .card{
+      width: var(--card-w);
+      background: rgba(16, 18, 22, 0.72);
+      backdrop-filter: blur(12px);
+      border-radius: 14px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.45);
+      transform: translateX(var(--shiftX));
+      padding: 22px 24px;
+    }
+
+    .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .panel-title{ font-size:18px; font-weight:700; }
+    .panel-desc{ color:rgba(255,255,255,.7); font-size:14px; margin-bottom:16px; }
+
+    .faucet-grid{
+      display:grid; grid-template-columns: 1fr 1fr; gap:12px;
+      margin-bottom: 14px;
+    }
+    .faucet-item{
+      display:flex; align-items:center; justify-content:space-between;
+      background: var(--tile-bg); border:1px solid var(--tile-bd);
+      border-radius: 12px; padding: 12px 14px;
+    }
+    .faucet-left{ display:flex; align-items:center; gap:12px; }
+    .token-icon{
+      width:36px; height:36px; border-radius:8px; background:#0f1115; display:grid; place-items:center;
+      border:1px solid var(--tile-bd); overflow:hidden;
+    }
+    .token-icon img{ width:22px; height:22px; object-fit:contain; filter: drop-shadow(0 0 4px rgba(0,255,170,.25)); }
+    .token-name{ font-weight:600; }
+    .status{ color:#3cd27a; font-size:13px; }
+
+    .faucet-actions{ display:flex; align-items:center; gap:8px; }
+    .btn-mini{
+      background:#27ae60; color:#fff; border:none; border-radius:8px;
+      padding:8px 12px; font-weight:700; cursor:pointer;
+    }
+    .btn-mini:disabled{ background:#555; cursor:not-allowed; }
+
+    .claim-all{
+      margin-top:6px;
+      display:flex; align-items:center; justify-content:space-between;
+      background:rgba(18,20,24,.85); border:1px dashed var(--tile-bd);
+      border-radius:12px; padding:14px;
+    }
+    .claim-meta{ display:flex; align-items:center; gap:10px; }
+    .claim-meta .badge{ width:30px; height:30px; border-radius:8px; display:grid; place-items:center; background:#0f1115; border:1px solid var(--tile-bd); }
+    .claim-cta{ background:#2f6fed; border:none; color:#fff; font-weight:800; padding:10px 16px; border-radius:10px; cursor:pointer; }
+    .claim-cta:disabled{ background:#555; }
+
+    .flash{ margin:10px 0; padding:10px; border-radius:8px; }
+    .success{ background:#27ae60; } .danger{ background:#c0392b; } .info{ background:#2980b9; }
+
+    .top-right-user{ position:fixed; top:14px; right:16px; display:flex; align-items:center; gap:10px;
+      background:rgba(22,24,28,.7); padding:6px 10px; border-radius:999px; backdrop-filter:blur(6px); }
+    .top-right-user img{ width:28px; height:28px; border-radius:50%; object-fit:cover; }
+    .top-right-user .name{ font-size:14px; font-weight:600; }
+
+    @media (max-width: 900px){
+      :root{ --shiftX: 0px; --card-w: 94vw; }
+      .faucet-grid{ grid-template-columns: 1fr; }
+    }
+
+    .status.available { color: #3cd27a; }
+    .status.unavailable { color: #999; }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='images/ZenFi.jpg') }}" alt="ZenFi Logo">
+      <span>ZenFi</span>
+    </div>
+    <nav class="menu">
+      <a href="/mint_page" class="{% if active_page=='mint' %}active{% endif %}"><i class="fa-solid fa-faucet"></i> Faucet Testnet Token</a>
+      <a href="/earn" class="{% if active_page=='earn' %}active{% endif %}"><i class="fa-solid fa-coins"></i> Earn</a>
+      <a href="/borrow" class="{% if active_page=='borrow' %}active{% endif %}"><i class="fa-solid fa-hand-holding-dollar"></i> Borrow</a>
+      <a href="/swap" class="{% if active_page=='swap' %}active{% endif %}"><i class="fa-solid fa-retweet"></i> Swap</a>
+      <a href="/wallet" class="{% if active_page=='wallet' %}active{% endif %}"><i class="fa-solid fa-wallet"></i> My Wallet</a>
+      <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+    </nav>
+  </aside>
+
+  <!-- Avatar góc phải -->
+  <div class="top-right-user">
+    <img src="{{ url_for('static', filename='images/user.png') }}" alt="User Avatar">
+    <span class="name">{{ username }}</span>
+  </div>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="card">
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="panel-head">
+        <div class="panel-title">Faucets</div>
+      </div>
+      <div class="panel-desc">
+        Testnet faucets for ZenFi tokens. Click Claim to receive test tokens. The faucet refreshes every 24 hours, allowing you to claim again.
+      </div>
+
+      <div class="faucet-grid">
+        <!-- ZTC -->
+        <div class="faucet-item">
+          <div class="faucet-left">
+            <div class="token-icon">
+              <img src="{{ url_for('static', filename='images/ZTC.png') }}" alt="ZTC">
+            </div>
+            <div>
+              <div class="token-name">ZTC Faucet</div>
+              <div class="status {% if can_mint %}available{% else %}unavailable{% endif %}">
+                {% if can_mint %}Available{% else %}Unavailable{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="faucet-actions">
+            <form method="post" action="/mint" class="faucet-form">
+              <input type="hidden" name="token" value="ZTC">
+              <button type="submit" class="btn-mini" {% if not can_mint %}disabled{% endif %}>
+                Claim
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- zBTC -->
+        <div class="faucet-item">
+          <div class="faucet-left">
+            <div class="token-icon">
+              <img src="{{ url_for('static', filename='images/zBTC.png') }}" alt="zBTC">
+            </div>
+            <div>
+              <div class="token-name">zBTC Faucet</div>
+              <div class="status {% if can_mint_zbtc %}available{% else %}unavailable{% endif %}">
+                {% if can_mint_zbtc %}Available{% else %}Unavailable{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="faucet-actions">
+            <form method="post" action="/mint" class="faucet-form">
+              <input type="hidden" name="token" value="zBTC">
+              <button type="submit" class="btn-mini" {% if can_mint_zbtc is defined and not can_mint_zbtc %}disabled{% endif %}>
+                Claim
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- zETH -->
+        <div class="faucet-item">
+          <div class="faucet-left">
+            <div class="token-icon">
+              <img src="{{ url_for('static', filename='images/zETH.png') }}" alt="zETH">
+            </div>
+            <div>
+              <div class="token-name">zETH Faucet</div>
+              <div class="status {% if can_mint_zeth %}available{% else %}unavailable{% endif %}">
+                {% if can_mint_zeth %}Available{% else %}Unavailable{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="faucet-actions">
+            <form method="post" action="/mint" class="faucet-form">
+              <input type="hidden" name="token" value="zETH">
+              <button type="submit" class="btn-mini" {% if can_mint_zeth is defined and not can_mint_zeth %}disabled{% endif %}>
+                Claim
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- ZFI -->
+        <div class="faucet-item">
+          <div class="faucet-left">
+            <div class="token-icon">
+              <img src="{{ url_for('static', filename='images/ZenFi.jpg') }}" alt="ZFI">
+            </div>
+            <div>
+              <div class="token-name">ZFI Faucet</div>
+              <div class="status {% if can_mint_zfi %}available{% else %}unavailable{% endif %}">
+                {% if can_mint_zfi %}Available{% else %}Unavailable{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="faucet-actions">
+            <form method="post" action="/mint" class="faucet-form">
+              <input type="hidden" name="token" value="ZFI">
+              <button type="submit" class="btn-mini" {% if can_mint_zfi is defined and not can_mint_zfi %}disabled{% endif %}>
+                Claim
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- USDT -->
+        <div class="faucet-item">
+          <div class="faucet-left">
+            <div class="token-icon">
+              <img src="{{ url_for('static', filename='images/usdt.png') }}" alt="USDT">
+            </div>
+            <div>
+              <div class="token-name">USDT Faucet</div>
+              <div class="status {% if can_mint_usdt %}available{% else %}unavailable{% endif %}">
+                {% if can_mint_usdt %}Available{% else %}Unavailable{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="faucet-actions">
+            <form method="post" action="/mint" class="faucet-form">
+              <input type="hidden" name="token" value="USDT">
+              <button type="submit" class="btn-mini" {% if can_mint_usdt is defined and not can_mint_usdt %}disabled{% endif %}>
+                Claim
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- USDC -->
+        <div class="faucet-item">
+          <div class="faucet-left">
+            <div class="token-icon">
+              <img src="{{ url_for('static', filename='images/usdc.png') }}" alt="USDC">
+            </div>
+            <div>
+              <div class="token-name">USDC Faucet</div>
+              <div class="status {% if can_mint_usdc %}available{% else %}unavailable{% endif %}">
+                {% if can_mint_usdc %}Available{% else %}Unavailable{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="faucet-actions">
+            <form method="post" action="/mint" class="faucet-form">
+              <input type="hidden" name="token" value="USDC">
+              <button type="submit" class="btn-mini" {% if can_mint_usdc is defined and not can_mint_usdc %}disabled{% endif %}>
+                Claim
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    async function postForm(urlEncoded){
+      return fetch("/mint", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: urlEncoded
+      });
+    }
+    async function claimAll(){
+      const tokens = ["ZTC","zBTC","zETH","ZFI","USDT","USDC"];
+      for (const t of tokens){
+        try{
+          await postForm("token=" + encodeURIComponent(t));
+        }catch(e){ console.warn("Claim failed for", t, e); }
+      }
+      location.reload();
+    }
+  </script>
+
+  <script src="{{ url_for('static', filename='js/mint.js') }}"></script>
+</body>
+</html>

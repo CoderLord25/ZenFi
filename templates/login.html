@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ZenFI Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+
+      /* Background image */
+      background: url("{{ url_for('static', filename='images/Zen1.webp') }}") no-repeat center center fixed;
+      background-size: cover;
+    }
+    .container {
+      background: rgba(22, 24, 28, 0.92);
+      padding: 60px;
+      border-radius: 16px;
+      width: 550px;
+      max-width: 95%;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.9);
+    }
+    h1 {
+      color: #A6FF4D;
+      margin-bottom: 25px;
+      font-size: 32px;
+    }
+    .btn {
+      background: #A6FF4D;
+      border: none;
+      border-radius: 30px;
+      padding: 14px 28px;
+      margin: 12px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 18px;
+      color: #000;
+      transition: 0.2s;
+    }
+    .btn:hover {
+      background: #90e63c;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 30px;
+      border: 1px solid #2f3336;
+      background: #000;
+      color: #fff;
+      margin-bottom: 18px;
+      font-size: 16px;
+    }
+    input:focus {
+      outline: none;
+      border: 1px solid #A6FF4D;
+    }
+    .zenid-card {
+      margin-top: 20px;
+      background: #0d0f11;
+      border-radius: 12px;
+      padding: 25px;
+    }
+    .zenid-card img {
+      max-width: 200px;
+      margin-bottom: 18px;
+    }
+    .address {
+      background: #1e1e1e;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 15px;
+      word-break: break-all;
+      color: #A6FF4D;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.7);
+    }
+    .modal-content {
+      background: #1e1e1e;
+      color: #fff;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 12px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0 0 20px rgba(0,255,100,0.4);
+    }
+    .modal-content h2 {
+      color: #27ae60;
+      margin-bottom: 10px;
+    }
+    #closeModal {
+      float: right;
+      font-size: 22px;
+      cursor: pointer;
+    }
+    .checkmark {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: inline-block;
+      stroke-width: 3;
+      stroke: #27ae60;
+      stroke-miterlimit: 10;
+      box-shadow: inset 0px 0px 0px #27ae60;
+      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+      position: relative;
+      margin: 20px auto;
+    }
+    .checkmark__circle {
+      stroke-dasharray: 166;
+      stroke-dashoffset: 166;
+      stroke-width: 3;
+      stroke-miterlimit: 10;
+      stroke: #27ae60;
+      fill: none;
+      animation: stroke 0.6s cubic-bezier(.65, .0, .45, 1) forwards;
+    }
+    .checkmark__check {
+      transform-origin: 50% 50%;
+      stroke-dasharray: 48;
+      stroke-dashoffset: 48;
+      animation: stroke 0.3s cubic-bezier(.65, .0, .45, 1) 0.8s forwards;
+    }
+    @keyframes stroke {
+      100% { stroke-dashoffset: 0; }
+    }
+    @keyframes scale {
+      0%, 100% { transform: none; }
+      50% { transform: scale3d(1.1, 1.1, 1); }
+    }
+    @keyframes fill {
+      100% { box-shadow: inset 0px 0px 0px 80px #27ae60; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ZenFi</h1>
+    <div id="step1">
+      <p>Do you already own a ZenID?</p>
+      <button class="btn" onclick="showLogin()">Login with ZenID</button>
+      <button class="btn" onclick="mintZenID()">Mint ZenID</button>
+      <button class="btn" onclick="connectWallet()">Connect Wallet</button>
+    </div>
+
+    <!-- ZenFi Login -->
+    <div id="loginForm" style="display:none;">
+      <input type="text" id="zenidInput" placeholder="Enter your ZenID address">
+      <button class="btn" onclick="login()">Login</button>
+    </div>
+
+    <!-- Mint Success -->
+    <div id="mintSuccess" style="display:none;">
+      <div class="zenid-card">
+        <img src="{{ url_for('static', filename='images/ZenID.jpg') }}" alt="ZenID">
+        <h2>Congratulations! 🎉</h2>
+        <p>You have successfully joined <b>ZenCommunity</b></p>
+        <p class="address" id="generatedAddress"></p>
+        <button class="btn" onclick="backToLogin()">Back to Login</button>
+      </div>
+    </div>
+
+    <!-- Unified Wallet Modal -->
+    <div id="walletModal" class="modal">
+      <div class="modal-content">
+        <span id="closeModal">&times;</span>
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+          <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+          <path class="checkmark__check" fill="none" d="M14 27l7 7 16-16"/>
+        </svg>
+        <h2>Wallet Connected</h2>
+        <p id="walletAddress"></p>
+      </div>
+    </div>
+  </div>
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>
