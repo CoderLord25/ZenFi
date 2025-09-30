@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ZenFi — Earn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --sidebar-w: 300px;
+      --shiftX: -150px;
+      --card-w: 1200px;
+      --tile-bg: rgba(18,20,24,0.9);
+      --tile-bd: rgba(255,255,255,0.06);
+      --muted: #9aa4af;
+      --row-h: 84px;
+      --brand-green: #a8ff35;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      background: url("{{ url_for('static', filename='images/ZenFi.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      pointer-events: none;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #0f1216;
+      border-right: 1px solid rgba(192,192,192,.35);
+      backdrop-filter: saturate(120%) blur(6px);
+      padding: 18px 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .brand img {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .brand-title {
+      color: var(--brand-green);
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+
+    /* Sidebar links */
+    .nav a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 6px;
+      border-radius: 10px;
+      color: #fff;
+      text-decoration: none;
+      opacity: .95;
+    }
+
+    .nav a:hover {
+      background: rgba(255,255,255,0.06);
+    }
+
+    .nav a.active {
+      background: rgba(255,255,255,0.08);
+    }
+
+    /* Main + panel */
+    .main {
+      padding: 40px 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .panel {
+      width: var(--card-w);
+      transform: translateX(var(--shiftX));
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    /* Topbar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .search {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 44px;
+      border: 1px solid var(--tile-bd);
+      border-radius: 12px;
+      padding: 0 14px;
+      background: rgba(0,0,0,0.25);
+    }
+
+    .search input {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      border: 0;
+      outline: none;
+      color: #fff;
+      font-size: 15px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .create-btn {
+      border: 0;
+      border-radius: 18px;
+      padding: 10px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #1fc4a4;
+      color: #0b0f12;
+    }
+
+    .create-btn:hover {
+      filter: brightness(0.95);
+    }
+
+    .userbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--tile-bd);
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .userbar img {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid #0b0f12;
+    }
+
+    .userbar span {
+      font-weight: 600;
+      font-size: 14px;
+      opacity: .95;
+    }
+
+    /* Table */
+    .card {
+      background: var(--tile-bg);
+      border: 1px solid var(--tile-bd);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+   /* Scrollable table container */
+    .table-container {
+      max-height: 500px; 
+      overflow-y: auto; 
+      padding-right: 10px; 
+    }
+
+    .thead, .row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr .8fr;
+      padding: 14px 18px;
+    }
+
+    .thead {
+      color: var(--muted);
+      font-size: 14px;
+      border-bottom: 1px solid var(--tile-bd);
+      position: sticky;
+      top: 0;
+      backdrop-filter: saturate(120%) blur(6px);
+      background: rgba(10,12,15,0.7);
+    }
+
+    .row {
+      align-items: center;
+      min-height: var(--row-h);
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .row:last-child {
+      border-bottom: 0;
+    }
+
+    .asset {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .icons {
+      position: relative;
+      width: 46px;
+      height: 32px;
+    }
+
+    .icons img,
+    .icons .fallback {
+      position: absolute;
+      top: 0;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #0b0f12;
+      object-fit: cover;
+    }
+
+    .icons img:first-child,
+    .icons .fallback:first-child {
+      left: 0;
+    }
+
+    .icons img:last-child,
+    .icons .fallback:last-child {
+      left: 18px;
+    }
+
+    .fallback {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: #24303a;
+      font-size: 12px;
+      color: #cfe2f5;
+      font-weight: 700;
+    }
+
+    .pair {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .pair .name {
+      font-weight: 600;
+    }
+
+    .badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--tile-bd);
+      color: #cdd7e1;
+      opacity: .9;
+    }
+
+    .badge.tier {
+      background: rgba(255,255,255,0.04);
+    }
+
+    .badge.boost {
+      background: rgba(230,80,80,0.12);
+      border-color: rgba(230,80,80,0.3);
+      color: #ffb3b3;
+    }
+
+    .num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .sort {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .sort .arrow {
+      display: inline-block;
+      width: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 1100px) {
+      :root {
+        --card-w: 98vw;
+        --shiftX: 0px;
+      }
+
+      .thead,
+      .row {
+        grid-template-columns: 1.6fr 1fr 1fr .9fr .9fr .8fr;
+      }
+    }
+    /* Modal for Pool Details */
+    #poolDetailsModal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6); /* Mờ nền khi hiển thị modal */
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-content {
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 20px;
+      width: 400px;
+      text-align: center;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    #poolDetailsModal input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #3a3a3a;
+      background: #333;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    #poolDetailsModal button {
+      padding: 12px 20px;
+      background-color: #1fc4a4;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #poolDetailsModal button:hover {
+      background-color: #1ab79d;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      cursor: pointer;
+      color: #fff;
+      background: none;
+      border: none;
+    }
+
+
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="{{ url_for('static', filename='images/ZenFi.jpg') }}?v={{ cache_bust|default(0) }}" alt="ZenFi">
+      <div class="brand-title">ZenFi</div>
+    </div>
+    <nav class="nav">
+      <a href="{{ url_for('mint_page') }}" class="{% if active_page=='mint' %}active{% endif %}">
+        <i class="fa-solid fa-faucet"></i> Faucet Testnet Token
+      </a>
+      <a href="{{ url_for('earn') }}" class="{% if active_page=='earn' %}active{% endif %}">
+        <i class="fa-solid fa-coins"></i> Earn
+      </a>
+      <a href="/borrow" class="{% if active_page=='borrow' %}active{% endif %}">
+        <i class="fa-solid fa-hand-holding-dollar"></i> Borrow
+      </a>
+      <a href="/swap" class="{% if active_page=='swap' %}active{% endif %}">
+        <i class="fa-solid fa-retweet"></i> Swap
+      </a>
+      <a href="/wallet" class="{% if active_page=='wallet' %}active{% endif %}">
+        <i class="fa-solid fa-wallet"></i> My Wallet
+      </a>
+      <a href="{{ url_for('logout') }}">
+        <i class="fa-solid fa-right-from-bracket"></i> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="panel">
+      <div class="topbar">
+        <div class="search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M21 21l-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="#9aa4af" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <input id="search" placeholder="Search by name, address" />
+        </div>
+
+        <div class="actions">
+          <button class="create-btn" id="createPoolBtn">+ Create pool</button>
+          <a class="userbar" href="{{ profile_href }}">
+            <img src="{{ avatar|default(url_for('static', filename='images/user.png')) }}" alt="avatar" onerror="this.src='{{ url_for('static', filename='images/user.png') }}'">
+            <span>{{ username|default('User') }}</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="thead">
+          <div>Assets</div>
+          <div class="sort" id="sortTvl">TVL <span class="arrow" id="arrowTvl">↑</span></div>
+          <div>Volume(24H)</div>
+          <div>Debt Ratio</div>
+          <div>Fees(24H)</div>
+          <div>APR</div>
+        </div>
+
+        <div class="table-container" id="rows">
+          {% for pool in pools %}
+            <div class="row" onclick="showPoolDetails('{{ pool.pair }}', {{ loop.index }}, {{ pool.tvl }}, {{ pool.aprPct }})">
+              <div class="asset">
+                <div class="icons">
+                  <img src="{{ pool.icons[0] }}" width="32" height="32" />
+                  <img src="{{ pool.icons[1] }}" width="32" height="32" />
+                </div>
+                <div class="pair">
+                  <div class="name">{{ pool.pair }}</div>
+                  <div class="badges">
+                    {% for tag in pool.tags %}
+                      <span class="badge">{{ tag }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+              <div class="num">{{ pool.tvl | format_currency }}</div>
+              <div class="num">{{ pool.vol24h | format_currency }}</div>
+              <div class="num">{{ pool.debtRatioPct | round(4) }}%</div>
+              <div class="num">{{ pool.fees24h | format_currency }}</div>
+              <div class="num">{{ pool.aprPct | round(2) }}%</div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal for Pool Details -->
+    <div id="poolDetailsModal" style="display: none;">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">×</span>
+        <h3>Pool Details: <span id="poolName"></span></h3>
+        <label for="depositZenAmount">ZEN Amount:</label>
+        <input type="number" id="depositZenAmount" placeholder="Amount to deposit in ZEN" oninput="updateUSDT()">
+        <br />
+        <label for="depositUSDTAmount">USDT Amount:</label>
+        <input type="number" id="depositUSDTAmount" placeholder="Amount to deposit in USDT" oninput="updateZEN()">
+        <br />
+        <button onclick="submitDeposit()">Submit Deposit</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="{{ url_for('static', filename='js/earn.js') }}"></script>
+
+  <script>
+    let poolData = {};  // To store pool information
+
+    // Show Pool Details Modal
+    function showPoolDetails(pair, index, tvl, apr) {
+      document.getElementById("poolName").innerText = pair;
+      poolData = { pair, index, tvl, apr };
+      document.getElementById("poolDetailsModal").style.display = "block";
+    }
+
+    // Close Modal
+    function closeModal() {
+      document.getElementById("poolDetailsModal").style.display = "none";
+    }
+
+    // Update USDT when ZEN is entered
+    function updateUSDT() {
+      const zenAmount = document.getElementById("depositZenAmount").value;
+      const usdtAmount = (zenAmount * poolData.apr).toFixed(2);  // Just a simple calculation
+      document.getElementById("depositUSDTAmount").value = usdtAmount;
+    }
+
+    // Update ZEN when USDT is entered
+    function updateZEN() {
+      const usdtAmount = document.getElementById("depositUSDTAmount").value;
+      const zenAmount = (usdtAmount / poolData.apr).toFixed(2);  // Reverse calculation
+      document.getElementById("depositZenAmount").value = zenAmount;
+    }
+
+    // Submit Deposit
+    function submitDeposit() {
+      const zenAmount = document.getElementById("depositZenAmount").value;
+      const usdtAmount = document.getElementById("depositUSDTAmount").value;
+      if (zenAmount <= 0 && usdtAmount <= 0) {
+        alert("Please enter a valid deposit amount.");
+        return;
+      }
+
+      alert(`Deposited ${zenAmount} ZEN and ${usdtAmount} USDT into ${poolData.pair}`);
+      closeModal();
+    }
+  </script>
+</body>
+</html>
